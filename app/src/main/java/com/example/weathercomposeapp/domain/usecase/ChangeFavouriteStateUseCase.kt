@@ -10,6 +10,6 @@ class ChangeFavouriteStateUseCase @Inject constructor(
 
     suspend fun addToFavourite(city: City) = repository.addToFavourite(city = city)
 
-    suspend fun removeFromFavourite(cityId: Int) = repository.removeFromFavourite(cityId = cityId)
+    suspend fun removeFromFavourite(cityId: Long) = repository.removeFromFavourite(cityId = cityId)
 
 }

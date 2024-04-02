@@ -7,7 +7,7 @@ class ObserveFavouriteStateCitiesUseCase @Inject constructor(
     private val repository: FavouriteRepository
 ) {
 
-    operator fun invoke(cityId: Int) =
+    operator fun invoke(cityId: Long) =
         repository.observeIsFavourite(cityId = cityId)
 
 }

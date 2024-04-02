@@ -1,7 +1,7 @@
 package com.example.weathercomposeapp.domain.entity
 
 data class City(
-    val id: Int,
-    val name: String,
+    val id: Long,
+    val city: String,
     val country: String
 )
