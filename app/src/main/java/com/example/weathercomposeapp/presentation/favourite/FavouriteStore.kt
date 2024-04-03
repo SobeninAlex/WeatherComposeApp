@@ -5,33 +5,71 @@ import com.arkivanov.mvikotlin.core.store.Store
 import com.arkivanov.mvikotlin.core.store.StoreFactory
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineBootstrapper
 import com.arkivanov.mvikotlin.extensions.coroutines.CoroutineExecutor
+import com.example.weathercomposeapp.domain.entity.City
+import com.example.weathercomposeapp.domain.usecase.GetCurrentWeatherUseCase
+import com.example.weathercomposeapp.domain.usecase.GetFavouriteCitiesUseCase
 import com.example.weathercomposeapp.presentation.favourite.FavouriteStore.*
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 internal interface FavouriteStore : Store<Intent, State, Label> {
 
     sealed interface Intent {
 
+        data object ClickSearch : Intent
+
+        data object ClickToFavourite : Intent
+
+        data class CityItemClicked(val city: City) : Intent
+
     }
 
     data class State(
-        val todo: Unit
-    )
+        val cityItems: List<CityItem>
+    ) {
+
+        data class CityItem(
+            val city: City,
+            val weatherState: WeatherState
+        )
+
+        sealed interface WeatherState {
+
+            data object Initial : WeatherState
+
+            data object Loading : WeatherState
+
+            data object Error : WeatherState
+
+            data class Loaded(val tempC: Float, val iconUrl: String) : WeatherState
+
+        }
+
+    }
 
     sealed interface Label {
+
+        data object ClickSearch : Label
+
+        data object ClickToFavourite : Label
+
+        data class CityItemClicked(val city: City) : Label
 
     }
 
 }
 
 
-internal class FavouriteStoreFactory(
-    private val storeFactory: StoreFactory
+internal class FavouriteStoreFactory @Inject constructor(
+    private val storeFactory: StoreFactory,
+    private val getFavouriteCitiesUseCase: GetFavouriteCitiesUseCase,
+    private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase
 ) {
 
     fun create(): FavouriteStore =
         object : FavouriteStore, Store<Intent, State, Label> by storeFactory.create(
             name = "FavouriteStore",
-            initialState = State(Unit),
+            initialState = State(cityItems = listOf()),
             bootstrapper = BootstrapperImpl(),
             executorFactory = ::ExecutorImpl,
             reducer = ReducerImpl
@@ -39,31 +77,153 @@ internal class FavouriteStoreFactory(
 
     private sealed interface Action {
 
+        data class FavouriteCitiesLoaded(val cities: List<City>) : Action
+
     }
 
     private sealed interface Msg {
 
+        data class FavouriteCitiesLoaded(val cities: List<City>) : Msg
+
+        data class WeatherLoaded(
+            val cityId: Long,
+            val tempC: Float,
+            val iconUrl: String
+        ) : Msg
+
+        data class WeatherLoadingError(
+            val cityId: Long
+        ) : Msg
+
+        data class WeatherIsLoading(
+            val cityId: Long
+        ) : Msg
+
     }
 
-    private class BootstrapperImpl : CoroutineBootstrapper<Action>() {
+    private inner class BootstrapperImpl : CoroutineBootstrapper<Action>() {
+
         override fun invoke() {
-
+            scope.launch {
+                getFavouriteCitiesUseCase().collect { cityList ->
+                    dispatch(Action.FavouriteCitiesLoaded(cityList))
+                }
+            }
         }
+
     }
 
-    private class ExecutorImpl : CoroutineExecutor<Intent, Action, State, Msg, Label>() {
+    private inner class ExecutorImpl : CoroutineExecutor<Intent, Action, State, Msg, Label>() {
+
         override fun executeIntent(intent: Intent, getState: () -> State) {
-            super.executeIntent(intent, getState)
+            when (intent) {
+                is Intent.CityItemClicked -> {
+                    publish(Label.CityItemClicked(intent.city))
+                }
+
+                is Intent.ClickSearch -> {
+                    publish(Label.ClickSearch)
+                }
+
+                is Intent.ClickToFavourite -> {
+                    publish(Label.ClickToFavourite)
+                }
+            }
         }
 
         override fun executeAction(action: Action, getState: () -> State) {
-            super.executeAction(action, getState)
+            when (action) {
+                is Action.FavouriteCitiesLoaded -> {
+                    val cities = action.cities
+                    dispatch(Msg.FavouriteCitiesLoaded(cities))
+                    cities.forEach { city ->
+                        scope.launch {
+                            loadWeatherForCity(city)
+                        }
+                    }
+                }
+            }
         }
+
+        private suspend fun loadWeatherForCity(city: City) {
+            dispatch(Msg.WeatherIsLoading(city.id))
+            try {
+                val weather = getCurrentWeatherUseCase(city.id)
+                dispatch(
+                    Msg.WeatherLoaded(
+                        cityId = city.id,
+                        tempC = weather.tempC,
+                        iconUrl = weather.conditionUrl
+                    )
+                )
+            } catch (e: Exception) {
+                dispatch(Msg.WeatherLoadingError(city.id))
+            }
+
+        }
+
     }
 
     private object ReducerImpl : Reducer<State, Msg> {
-        override fun State.reduce(msg: Msg): State = State(Unit)
-    }
 
+        override fun State.reduce(msg: Msg): State = when (msg) {
+            is Msg.FavouriteCitiesLoaded -> {
+                copy(
+                    cityItems = msg.cities.map {
+                        State.CityItem(
+                            city = it,
+                            weatherState = State.WeatherState.Initial
+                        )
+                    }
+                )
+            }
+
+            is Msg.WeatherIsLoading -> {
+                copy(
+                    cityItems = cityItems.map {
+                        if (it.city.id == msg.cityId) {
+                             it.copy(
+                                 weatherState = State.WeatherState.Loading
+                             )
+                        } else {
+                            it
+                        }
+                    }
+                )
+            }
+
+            is Msg.WeatherLoaded -> {
+                copy(
+                    cityItems = cityItems.map {
+                        if (it.city.id == msg.cityId) {
+                            it.copy(
+                                weatherState = State.WeatherState.Loaded(
+                                    tempC = msg.tempC,
+                                    iconUrl = msg.iconUrl
+                                )
+                            )
+                        } else {
+                            it
+                        }
+                    }
+                )
+            }
+
+            is Msg.WeatherLoadingError -> {
+                copy(
+                    cityItems = cityItems.map {
+                        if (it.city.id == msg.cityId) {
+                            it.copy(
+                                weatherState = State.WeatherState.Error
+                            )
+                        } else {
+                            it
+                        }
+                    }
+                )
+            }
+        }
+
+    }
 
 }
