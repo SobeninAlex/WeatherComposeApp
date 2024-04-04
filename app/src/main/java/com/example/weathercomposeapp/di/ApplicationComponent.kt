@@ -4,6 +4,7 @@ import android.content.Context
 import com.example.weathercomposeapp.di.annotation.ApplicationScope
 import com.example.weathercomposeapp.di.module.DataModule
 import com.example.weathercomposeapp.di.module.PresentationModule
+import com.example.weathercomposeapp.presentation.MainActivity
 import dagger.BindsInstance
 import dagger.Component
 
@@ -15,6 +16,8 @@ import dagger.Component
     ]
 )
 interface ApplicationComponent {
+
+    fun inject(mainActivity: MainActivity)
 
     @Component.Factory
     interface Factory {

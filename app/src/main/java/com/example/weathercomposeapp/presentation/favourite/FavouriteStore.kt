@@ -12,13 +12,15 @@ import com.example.weathercomposeapp.presentation.favourite.FavouriteStore.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-internal interface FavouriteStore : Store<Intent, State, Label> {
+interface FavouriteStore : Store<Intent, State, Label> {
 
     sealed interface Intent {
 
+        //действия, которые может совершить пользователь
+
         data object ClickSearch : Intent
 
-        data object ClickToFavourite : Intent
+        data object ClickAddToFavourite : Intent
 
         data class CityItemClicked(val city: City) : Intent
 
@@ -49,6 +51,8 @@ internal interface FavouriteStore : Store<Intent, State, Label> {
 
     sealed interface Label {
 
+        //действия при которых происходит навигация
+
         data object ClickSearch : Label
 
         data object ClickToFavourite : Label
@@ -60,7 +64,7 @@ internal interface FavouriteStore : Store<Intent, State, Label> {
 }
 
 
-internal class FavouriteStoreFactory @Inject constructor(
+class FavouriteStoreFactory @Inject constructor(
     private val storeFactory: StoreFactory,
     private val getFavouriteCitiesUseCase: GetFavouriteCitiesUseCase,
     private val getCurrentWeatherUseCase: GetCurrentWeatherUseCase
@@ -77,11 +81,15 @@ internal class FavouriteStoreFactory @Inject constructor(
 
     private sealed interface Action {
 
+        //загрузка из репозитория при создании FavouriteStore
+
         data class FavouriteCitiesLoaded(val cities: List<City>) : Action
 
     }
 
     private sealed interface Msg {
+
+        //действия при которых меняется стейт экрана
 
         data class FavouriteCitiesLoaded(val cities: List<City>) : Msg
 
@@ -103,6 +111,8 @@ internal class FavouriteStoreFactory @Inject constructor(
 
     private inner class BootstrapperImpl : CoroutineBootstrapper<Action>() {
 
+        //загрузка из репозитория при создании FavouriteStore
+
         override fun invoke() {
             scope.launch {
                 getFavouriteCitiesUseCase().collect { cityList ->
@@ -115,6 +125,8 @@ internal class FavouriteStoreFactory @Inject constructor(
 
     private inner class ExecutorImpl : CoroutineExecutor<Intent, Action, State, Msg, Label>() {
 
+        //обработка интентов
+
         override fun executeIntent(intent: Intent, getState: () -> State) {
             when (intent) {
                 is Intent.CityItemClicked -> {
@@ -125,11 +137,13 @@ internal class FavouriteStoreFactory @Inject constructor(
                     publish(Label.ClickSearch)
                 }
 
-                is Intent.ClickToFavourite -> {
+                is Intent.ClickAddToFavourite -> {
                     publish(Label.ClickToFavourite)
                 }
             }
         }
+
+        //обработка экшенов
 
         override fun executeAction(action: Action, getState: () -> State) {
             when (action) {
@@ -165,6 +179,8 @@ internal class FavouriteStoreFactory @Inject constructor(
     }
 
     private object ReducerImpl : Reducer<State, Msg> {
+
+        //обработка сообщений, изменение стейта
 
         override fun State.reduce(msg: Msg): State = when (msg) {
             is Msg.FavouriteCitiesLoaded -> {
