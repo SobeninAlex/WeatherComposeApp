@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -48,53 +49,64 @@ import com.example.weathercomposeapp.presentation.ui.Gradient
 import com.example.weathercomposeapp.presentation.ui.theme.Orange
 import com.example.weathercomposeapp.utill.temperatureToFormattedString
 
+
 @Composable
 fun FavouriteContent(
+    modifier: Modifier = Modifier,
     component: FavouriteComponent
 ) {
 
     val state by component.model.collectAsState()
 
-    LazyVerticalGrid(
-        modifier = Modifier.fillMaxSize(),
-        columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        item(
-            span = { GridItemSpan(2) } //данный item займет две колонки грида
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background
+    ) { paddingValues ->
+        LazyVerticalGrid(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SearchCard(
-                onClick = { component.onClickSearch() }
-            )
-        }
-
-        itemsIndexed(
-            items = state.cityItems,
-            key = { _, item ->
-                item.city.id
+            item(
+                span = { GridItemSpan(2) } //данный item займет две колонки грида
+            ) {
+                SearchCard(
+                    onClick = { component.onClickSearch() }
+                )
             }
-        ) {index, item ->
-            CityCard(
-                cityItem = item,
-                index = index,
-                onClick = { component.onCityItemClick(item.city) }
-            )
-        }
 
-        item {
-            AddFavouriteCityCard(
-                onClick = { component.onClickAddFavourite() }
-            )
+            itemsIndexed(
+                items = state.cityItems,
+                key = { _, item ->
+                    item.city.id
+                }
+            ) { index, item ->
+                CityCard(
+                    cityItem = item,
+                    index = index,
+                    onClick = { component.onCityItemClick(item.city) }
+                )
+            }
+
+            item {
+                AddFavouriteCityCard(
+                    onClick = { component.onClickAddFavourite() }
+                )
+            }
         }
     }
+
 }
 
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun CityCard(
+    modifier: Modifier = Modifier,
     cityItem: FavouriteStore.State.CityItem,
     index: Int,
     onClick: () -> Unit
@@ -102,7 +114,7 @@ private fun CityCard(
     val gradient = getGradientByIndex(index)
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .shadow(
                 elevation = 12.dp,
@@ -114,7 +126,7 @@ private fun CityCard(
         ),
         shape = MaterialTheme.shapes.extraLarge,
     ) {
-        Box(modifier = Modifier
+        Box(modifier = modifier
             .background(brush = gradient.primaryGradient)
             .fillMaxSize()
             .sizeIn(minHeight = 176.dp)
@@ -139,14 +151,14 @@ private fun CityCard(
 
                 is FavouriteStore.State.WeatherState.Loaded -> {
                     GlideImage(
-                        modifier = Modifier
+                        modifier = modifier
                             .align(alignment = Alignment.TopEnd)
                             .size(56.dp),
                         model = weatherState.iconUrl,
                         contentDescription = null
                     )
                     Text(
-                        modifier = Modifier
+                        modifier = modifier
                             .align(Alignment.BottomStart)
                             .padding(bottom = 24.dp),
                         text = weatherState.tempC.temperatureToFormattedString(),
@@ -157,7 +169,7 @@ private fun CityCard(
 
                 is FavouriteStore.State.WeatherState.Loading -> {
                     CircularProgressIndicator(
-                        modifier = Modifier
+                        modifier = modifier
                             .align(Alignment.Center),
                         color = MaterialTheme.colorScheme.background
                     )
@@ -165,7 +177,7 @@ private fun CityCard(
             }
 
             Text(
-                modifier = Modifier.align(Alignment.BottomStart),
+                modifier = modifier.align(Alignment.BottomStart),
                 text = cityItem.city.city,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.background
@@ -177,6 +189,7 @@ private fun CityCard(
 
 @Composable
 private fun AddFavouriteCityCard(
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
@@ -187,7 +200,7 @@ private fun AddFavouriteCityCard(
         border = BorderStroke(width = 1.dp, color = MaterialTheme.colorScheme.onBackground)
     ) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .sizeIn(minHeight = 176.dp)
                 .fillMaxSize()
                 .clickable { onClick() }
@@ -196,7 +209,7 @@ private fun AddFavouriteCityCard(
 
         ) {
             Icon(
-                modifier = Modifier
+                modifier = modifier
                     .padding(16.dp)
                     .size(48.dp),
                 imageVector = Icons.Default.Edit,
@@ -204,8 +217,8 @@ private fun AddFavouriteCityCard(
                 tint = Orange
             )
 
-            Spacer(modifier = Modifier.weight(1f))
-            
+            Spacer(modifier = modifier.weight(1f))
+
             Text(
                 text = stringResource(R.string.add_favourite),
                 style = MaterialTheme.typography.titleMedium
@@ -217,6 +230,7 @@ private fun AddFavouriteCityCard(
 
 @Composable
 private fun SearchCard(
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     val gradient = CardGradients.gradients[3]
@@ -225,7 +239,7 @@ private fun SearchCard(
         shape = RoundedCornerShape(size = 8.dp)
     ) {
         Row(
-            modifier = Modifier
+            modifier = modifier
                 .clickable { onClick() }
                 .fillMaxWidth()
                 .background(brush = gradient.primaryGradient),
@@ -235,13 +249,14 @@ private fun SearchCard(
                 imageVector = Icons.Default.Search,
                 tint = MaterialTheme.colorScheme.surface,
                 contentDescription = null,
-                modifier = Modifier.padding(
+                modifier = modifier.padding(
                     horizontal = 16.dp,
                     vertical = 8.dp
                 )
             )
 
             Text(
+                modifier = modifier.padding(end = 16.dp),
                 text = stringResource(R.string.search_button),
                 color = MaterialTheme.colorScheme.surface,
             )

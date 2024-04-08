@@ -4,5 +4,5 @@ import com.google.gson.annotations.SerializedName
 
 data class DayDto(
     @SerializedName("day") val day: DayWeatherDto,
-    @SerializedName("day_epoch") val date: Long,
+    @SerializedName("date_epoch") val date: Long,
 )

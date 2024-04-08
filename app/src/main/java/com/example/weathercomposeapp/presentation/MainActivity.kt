@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import com.arkivanov.decompose.defaultComponentContext
 import com.example.weathercomposeapp.WeatherApp
 import com.example.weathercomposeapp.domain.usecase.ChangeFavouriteStateUseCase
+import com.example.weathercomposeapp.domain.usecase.GetCurrentWeatherUseCase
 import com.example.weathercomposeapp.domain.usecase.SearchCitiesUseCase
 import com.example.weathercomposeapp.presentation.root.DefaultRootComponent
 import com.example.weathercomposeapp.presentation.root.RootContent
@@ -18,6 +19,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var rootComponentFactory: DefaultRootComponent.Factory
+
 
     private val appComponent by lazy {
         (applicationContext as WeatherApp).applicationComponent

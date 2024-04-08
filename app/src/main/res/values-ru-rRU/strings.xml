@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WeatherComposeApp</string>
+    <string name="add_favourite">Добавить</string>
+    <string name="search_button">Поиск</string>
+    <string name="upcoming">Прогноз</string>
+</resources>

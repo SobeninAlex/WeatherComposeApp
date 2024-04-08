@@ -19,7 +19,7 @@ fun WeatherDto.toEntity(): Weather = Weather(
 
 fun WeatherForecastDto.toEntity(): Forecast = Forecast(
     currentWeather = current.toEntity(),
-    upcoming = forecast.forecastDay.drop(1).map {
+    upcoming = forecast.forecastDay.map {
         Weather(
             tempC = it.day.avgTemp,
             conditionText = it.day.condition.text,

@@ -2,4 +2,8 @@
     <string name="app_name">WeatherComposeApp</string>
     <string name="add_favourite">Add favourite</string>
     <string name="search_button">Search</string>
+    <string name="upcoming">Upcoming</string>
+    <string name="enter_name_city">Введите название города</string>
+    <string name="nothing_search">Ничего не найдено</string>
+    <string name="error_serach">Что то пошло не так...</string>
 </resources>
