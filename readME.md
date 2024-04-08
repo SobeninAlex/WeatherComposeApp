@@ -17,4 +17,4 @@
 - Dagger
 - Coroutine Flow
 
-[screen_cast.mp4](.files%2Fscreen_cast.mp4)
+![screen_cast.gif](.files%2Fscreen_cast.gif)
